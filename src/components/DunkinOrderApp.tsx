@@ -7,7 +7,6 @@ import { ChatPanel } from "./ChatPanel";
 import { SlidePanel } from "./SlidePanel";
 import { CartSummary } from "./CartSummary";
 import { QueryType } from "../context/ChatContext";
-import { menuItems } from "../data/menuData";
 import { ImageService } from "../services/imageService";
 import axios from "axios";
 const chatService = new ChatService();
@@ -25,6 +24,7 @@ export const DunkinOrderApp: React.FC = () => {
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isImageAnalyzing, setIsImageAnalyzing] = useState(false);
+  const menuItems = state.products; // Use products from state instead of imported menuItems
 
   // Replace with your DeepSeek API endpoint and API key
   const DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat/completions"; // Example endpoint
@@ -59,7 +59,7 @@ export const DunkinOrderApp: React.FC = () => {
       const imageDescription = await imageService.analyzeImage(file);
 
       const prompt = `Here is the menu data: ${JSON.stringify(
-        menuItems
+        state.products
       )}. Based on this image description: "${imageDescription}". Return the response in the format { "text": "", "items": [{ id: number, name: string, price: string }],"conclusion":"" }, where "text" is a creative/cleaver/funny information - in around 25 words and "items" is an array of matching menu items with only id, name, and price and "conclusion" is final short creative remark.. Include a maximum of 6 items and minimum 2 items - but be flexible with items count based on requirements. Do not include any additional text or explanations or format.`;
 
       const response = await axios.post(
@@ -298,7 +298,7 @@ export const DunkinOrderApp: React.FC = () => {
     try {
       try {
         const prompt = `Here is the menu data: ${JSON.stringify(
-          menuItems
+          state.products
         )}. Based on this, answer the user's query: ${input}. Return the response in the format strictly - { "text": "", "items": [{ "id": number, "name": string, "price": string }],"conclusion":"" }, where "text" is a creative/cleaver/funny information related to user query - in around 25 words and "items" is an array of matching menu items with only id, name, and price and "conclusion" is final short creative remark. Include a maximum of 6 items and minimum 2 items - but be flexible with items count based on requirements. Do not include any additional text or explanations or format type in response.`;
         // Call the DeepSeek API with the correct request format
         const response = await axios.post(

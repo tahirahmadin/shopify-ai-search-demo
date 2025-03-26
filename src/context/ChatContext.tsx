@@ -1,5 +1,7 @@
 // src/context/ChatContext.tsx
 import React, { createContext, useContext, useReducer } from "react";
+// src/context/ChatContext.tsx
+import { getProducts, Product } from "../services/serverActions";
 
 export enum QueryType {
   MENU_QUERY = "MENU_QUERY",
@@ -23,6 +25,7 @@ interface ChatState {
   currentQueryType: QueryType;
   mode: "chat" | "browse";
   cart: CartItem[];
+  products: Product[];
   checkout: {
     step: "details" | "payment" | null;
     orderDetails: {
@@ -46,6 +49,7 @@ export interface CartItem {
 type ChatAction =
   | { type: "ADD_MESSAGE"; payload: Message }
   | { type: "SET_LOADING"; payload: boolean }
+  | { type: "SET_PRODUCTS"; payload: Product[] }
   | { type: "SET_ERROR"; payload: string | null }
   | { type: "SET_QUERY_TYPE"; payload: QueryType }
   | { type: "CLEAR_MESSAGES" }
@@ -62,6 +66,11 @@ type ChatAction =
 
 const chatReducer = (state: ChatState, action: ChatAction): ChatState => {
   switch (action.type) {
+    case "SET_PRODUCTS":
+      return {
+        ...state,
+        products: action.payload,
+      };
     case "ADD_MESSAGE":
       return {
         ...state,
@@ -151,7 +160,7 @@ const chatReducer = (state: ChatState, action: ChatAction): ChatState => {
   }
 };
 
-const initialState: ChatState = {
+export const initialState: ChatState = {
   messages: [
     {
       id: 1,
@@ -175,6 +184,7 @@ const initialState: ChatState = {
   currentQueryType: QueryType.GENERAL,
   mode: "chat",
   cart: [],
+  products: [],
   checkout: {
     step: null,
     orderDetails: {
@@ -197,6 +207,39 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [state, dispatch] = useReducer(chatReducer, initialState);
+
+  // Fetch products when the component mounts
+  React.useEffect(() => {
+    const fetchProducts = async () => {
+      dispatch({ type: "SET_LOADING", payload: true });
+      console.log("Initiating product fetch...");
+
+      try {
+        const products = await getProducts();
+        console.log(`Fetched ${products.length} products successfully`);
+        if (products.length > 0) {
+          dispatch({ type: "SET_PRODUCTS", payload: products });
+        } else {
+          dispatch({
+            type: "SET_ERROR",
+            payload: "No products found. Please try again later.",
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching products:", error);
+        const errorMessage =
+          error instanceof Error ? error.message : "Failed to fetch products";
+        dispatch({
+          type: "SET_ERROR",
+          payload: errorMessage,
+        });
+      } finally {
+        dispatch({ type: "SET_LOADING", payload: false });
+      }
+    };
+
+    fetchProducts();
+  }, []);
 
   return (
     <ChatContext.Provider value={{ state, dispatch }}>

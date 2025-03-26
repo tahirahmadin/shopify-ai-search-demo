@@ -30,24 +30,29 @@ export const MenuList: React.FC<MenuListProps> = ({ items }) => {
     const itemMap = new Map(items.map((item) => [item.id, item.name]));
 
     // Filter menuItems and include the quantity from the items array
-    return MenuItemWithImage.filter((menuItem) => itemMap.has(menuItem.id)).map(
-      (menuItem) => ({
+    console.log("state.products");
+    console.log(state.products);
+    return state.products
+      .filter((menuItem) => itemMap.has(menuItem.id))
+      .map((menuItem) => ({
         ...menuItem,
         quantity: itemMap.get(menuItem.id), // Add quantity to the result
-      })
-    );
-  }, [items, MenuItemWithImage]);
+      }));
+  }, [items, state.products]);
 
   return (
     <div className="mt-2 ">
       <div className="grid grid-cols-2 sm:flex overflow-x-auto px-2 sm:px-4 gap-2 sm:gap-3 snap-x scrollbar-hide pb-2">
+        {console.log("filteredMenuItems")}
+        {console.log(filteredMenuItems)}
         {filteredMenuItems.map((meal, index) => (
           <div key={index} className="sm:flex-none sm:w-[120px] snap-start">
+            {console.log(meal.image)}
             <MenuItem
               id={meal.id}
               name={meal.name}
               price={meal.price}
-              image={meal.image}
+              image={meal.image.src}
               quantity={meal.quantity}
               compact={true}
             />

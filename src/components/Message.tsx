@@ -36,7 +36,8 @@ export const Message: React.FC<MessageProps> = ({ message, onRetry }) => {
             className="h-32 object-cover rounded-lg mb-2"
           />
         )}
-
+        {console.log("message.structuredText")}
+        {console.log(message.structuredText)}
         {message.isBot && message.structuredText ? (
           <div>
             <p className="text-gray-600">{message.structuredText.text}</p>
