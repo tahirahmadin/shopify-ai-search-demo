@@ -1,6 +1,7 @@
 import React from "react";
 import { ShoppingBag, MapPin, Phone, Clock, Wallet } from "lucide-react";
 import { useChatContext } from "../context/ChatContext";
+import { createOrder } from "../services/serverActions";
 import { useWallet } from "../context/WalletContext";
 
 interface PaymentFormProps {
@@ -22,12 +23,55 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({ onSubmit }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Format cart items for order
+    const lineItems = state.cart.map((item) => ({
+      variant_id: item.id,
+      quantity: item.quantity,
+    }));
+
+    // Split name into first and last name
+    const [firstName, ...lastNameParts] = orderDetails.name.split(" ");
+    const lastName = lastNameParts.join(" ") || ""; // Join remaining parts or empty string
+
+    const orderData = {
+      email: "customer@example.com", // You might want to add email to orderDetails
+      line_items: lineItems,
+      customer: {
+        first_name: firstName,
+        last_name: lastName,
+        email: "customer@example.com", // Same as above
+      },
+      billing_address: {
+        first_name: firstName,
+        last_name: lastName,
+        address1: orderDetails.address,
+        city: "Dubai", // You might want to add these fields to orderDetails
+        province: "Dubai",
+        country: "AE",
+        zip: "00000",
+      },
+      shipping_address: {
+        first_name: firstName,
+        last_name: lastName,
+        address1: orderDetails.address,
+        city: "Dubai",
+        province: "Dubai",
+        country: "AE",
+        zip: "00000",
+      },
+    };
+
     if (!connected) {
       await connectWallet();
       return;
     }
 
     try {
+      // Create order in Shopify
+      const orderResponse = await createOrder(orderData);
+      console.log("Order created successfully:", orderResponse);
+
+      // Process payment through wallet
       const signature = await transferUSDT(parseFloat(usdtAmount));
 
       if (signature) {
@@ -35,7 +79,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({ onSubmit }) => {
           type: "ADD_MESSAGE",
           payload: {
             id: Date.now(),
-            text: `🎉 Payment Successful! Transaction: ${signature.slice(
+            text: `🎉 Order placed and payment successful! Transaction: ${signature.slice(
               0,
               8
             )}...
@@ -61,7 +105,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({ onSubmit }) => {
         type: "ADD_MESSAGE",
         payload: {
           id: Date.now(),
-          text: "Payment failed. Please try again.",
+          text: "Order placement or payment failed. Please try again.",
           isBot: true,
           time: new Date().toLocaleTimeString("en-US", {
             hour: "numeric",
@@ -72,26 +116,6 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({ onSubmit }) => {
         },
       });
     }
-    // Simulate payment processing
-    dispatch({
-      type: "ADD_MESSAGE",
-      payload: {
-        id: Date.now(),
-        text: `🎉 Order Confirmed! Your order will be delivered to ${orderDetails.address} in approximately 30 minutes. We'll send updates to ${orderDetails.phone}. Thank you for choosing Dunkin'!`,
-        isBot: true,
-        time: new Date().toLocaleTimeString("en-US", {
-          hour: "numeric",
-          minute: "numeric",
-          hour12: true,
-        }),
-        queryType: "CHECKOUT",
-      },
-    });
-
-    // Reset checkout state
-    dispatch({ type: "SET_CHECKOUT_STEP", payload: null });
-    // Clear cart
-    dispatch({ type: "CLEAR_CART" });
   };
 
   return (

@@ -9,12 +9,7 @@ interface FiltersProps {
   setPeopleCount: (value: number) => void;
 }
 
-export const Filters: React.FC<FiltersProps> = ({
-  isVegOnly,
-  setIsVegOnly,
-  peopleCount,
-  setPeopleCount,
-}) => {
+export const Filters: React.FC<FiltersProps> = ({}) => {
   const { state, dispatch } = useChatContext();
 
   return (
